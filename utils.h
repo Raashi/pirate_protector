@@ -14,5 +14,7 @@ extern const int MAX_PATH_SIZE;
 std::string get_absolute_path(char* arg);
 // Temp папка пользователя
 std::string get_temp_dir();
+// Размер файла в байтах
+long get_file_size(char* filename);
 
 #endif

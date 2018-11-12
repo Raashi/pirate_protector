@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
 	std::setlocale(0, "");
 	// определяем расположение exe
 	std::string abs_path = get_absolute_path(argv[0]);
-	std::cout << "Абсолютный путь приложения: " << abs_path << "\n";
+	std::wcout << L"Абсолютный путь приложения: " << std::wstring(abs_path.begin(), abs_path.end()) << L"\n";
 	// читаем сигнатуру из конца файла
 	std::ifstream self_exe(abs_path, std::ios::binary);
 	// читаем сигнатуру
@@ -32,11 +32,14 @@ int main(int argc, char** argv) {
 	self_exe.seekg(-SIG_LEN, std::ios::end);
 	self_exe.read(signature, SIG_LEN);
 	// читаем размер структуры (патчер или информация об окружении)
-	long long struct_size;
+	long struct_size;
 	self_exe.seekg(-SIG_LEN - LONG_SIZE, std::ios::cur);
 	self_exe.read((char*)&struct_size, LONG_SIZE);
 	// ставим позицию на начало структуры
 	self_exe.seekg(-LONG_SIZE - struct_size, std::ios::cur);
+
+	std::string s_signature(signature);
+	std::wcout << L"Считанная сигнатура: " << std::wstring(s_signature.begin(), s_signature.end()) << L'\n';
 	
 	int retval = 0;
 	if (strcmp(signature, CHECKED) == 0) {

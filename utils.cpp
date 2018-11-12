@@ -2,15 +2,16 @@
 #include <stdio.h>
 #include <tchar.h>
 #include <windows.h>
+#include <sys/stat.h>
 
 #include "utils.h"
 
 const char* CHECKED = "_CHECKED_";
 const char* UNCHECKED = "UNCHECKED";
 
-const int SIG_LEN = sizeof(CHECKED);
+const int SIG_LEN = sizeof(UNCHECKED);
 const int INT_SIZE = 4;
-const int LONG_SIZE = 8;
+const int LONG_SIZE = 4;
 
 const int MAX_PATH_SIZE = 2048;
 
@@ -48,4 +49,10 @@ std::string get_absolute_path(char* arg) {
     }
 
 	return std::string(buffer);
+}
+
+long get_file_size(char* filename) {
+    struct stat stat_buf;
+    int rc = stat(filename, &stat_buf);
+    return rc == 0 ? stat_buf.st_size : -1;
 }

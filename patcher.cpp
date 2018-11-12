@@ -3,17 +3,9 @@
 #include <iostream>
 
 #include <string.h>
- #include <sys/stat.h>
 
 #include "utils.h"
 #include "structure.h"
-
-
-long get_file_size(char* filename) {
-    struct stat stat_buf;
-    int rc = stat(filename, &stat_buf);
-    return rc == 0 ? stat_buf.st_size : -1;
-}
 
 int main(int argc, char** argv) {
 	std::setlocale(0, "");
@@ -35,6 +27,8 @@ int main(int argc, char** argv) {
 	long long struct_size;
 	exe.seekg(-SIG_LEN - LONG_SIZE, std::ios::cur);
 	exe.read((char*)&struct_size, LONG_SIZE);
+
+	std::cout << signature << '\n';
 
 	int retval = 0;
 	if (strcmp(signature, UNCHECKED) != 0) {
