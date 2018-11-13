@@ -4,57 +4,61 @@
 
 #include "utils.h"
 
-int create_patcher(std::ifstream * self_exe, int patcher_size, std::string exe_path) {
-	std::string temp_dir = get_temp_dir();
+using namespace std;
+
+int create_signer(ifstream * self_exe, long signer_size, string exe_path) {
+	string temp_dir = get_temp_dir();
 	// Записываем сам exe
-	std::ofstream f_patcher(temp_dir + "patcher.exe");
-	char* patcher_data = new char[patcher_size];
-	self_exe->read(patcher_data, patcher_size);
-	f_patcher.write(patcher_data, patcher_size);
+	ofstream f_signer(/*temp_dir + */"signer.exe", std::ios::binary | std::ios::app);
+	char signer_data[signer_size];
+	self_exe->read(signer_data, signer_size);
+	f_signer.write(signer_data, signer_size);
 	// Записываем путь к самой проге
 	char char_exe_path[MAX_PATH_SIZE];
-	strncpy(char_exe_path, exe_path.c_str(), sizeof(exe_path));
-	std::cout << "Записанный в патчер путь: " << char_exe_path << "\n";
-	f_patcher.write(char_exe_path, sizeof(char_exe_path));
-	f_patcher.close();
+	strncpy(char_exe_path, exe_path.c_str(), sizeof(char_exe_path));
+	f_signer.write(char_exe_path, sizeof(char_exe_path));
+	wcout << L"Записанный в патчер путь: " << char_exe_path << L'\n';
+	
+	f_signer.close();
 	return 0;
 }
 
 int main(int argc, char** argv) {
 	std::setlocale(0, "");
+
 	// определяем расположение exe
-	std::string abs_path = get_absolute_path(argv[0]);
-	std::wcout << L"Абсолютный путь приложения: " << std::wstring(abs_path.begin(), abs_path.end()) << L"\n";
+	string abs_path = get_absolute_path(argv[0]);
+	wcout << L"Абсолютный путь приложения: " << wstring(abs_path.begin(), abs_path.end()) << L"\n";
 	// читаем сигнатуру из конца файла
-	std::ifstream self_exe(abs_path, std::ios::binary);
+	ifstream self_exe(abs_path, std::ios::binary);
 	// читаем сигнатуру
-	char* signature = new char [SIG_LEN];
+	char signature[SIG_LEN];
 	self_exe.seekg(-SIG_LEN, std::ios::end);
 	self_exe.read(signature, SIG_LEN);
 	// читаем размер структуры (патчер или информация об окружении)
 	long struct_size;
 	self_exe.seekg(-SIG_LEN - LONG_SIZE, std::ios::cur);
 	self_exe.read((char*)&struct_size, LONG_SIZE);
+	wcout << L"Размер структуры: " << struct_size << L'\n';
 	// ставим позицию на начало структуры
 	self_exe.seekg(-LONG_SIZE - struct_size, std::ios::cur);
 
-	std::string s_signature(signature);
-	std::wcout << L"Считанная сигнатура: " << std::wstring(s_signature.begin(), s_signature.end()) << L'\n';
+	string s_signature(signature);
+	wcout << L"Считанная сигнатура: " << wstring(s_signature.begin(), s_signature.end()) << L'\n';
 	
 	int retval = 0;
 	if (strcmp(signature, CHECKED) == 0) {
 		// проверить сигнатуру с реальным положением дел
 	} else if (strcmp(signature, UNCHECKED) == 0) {
 		// Создание патчера и его запуск
-		std::wcout << L"Создаем патчер";
-		std::wcout << L"Размер патчера (в байтах) равен = " << struct_size;
-		retval = create_patcher(&self_exe, struct_size, abs_path);
+		wcout << L"Создаем signer\n";
+		wcout << L"Размер signer'а (в байтах) равен = " << struct_size << L'\n';
+		retval = create_signer(&self_exe, struct_size, abs_path);
 	} else {
-		std::wcout << L"Ошибка! Запишите в оверлей данные и соответствующую сигнатуру\n";
+		wcout << L"Ошибка! Запишите в оверлей данные и соответствующую сигнатуру\n";
 		retval = 1;
 	}
 	
-	delete[] signature;
 	self_exe.close();
 	
 	return retval;

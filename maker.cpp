@@ -4,14 +4,17 @@
 
 #include "utils.h"
 
+using namespace std;
+
 int main(int argc, char** argv) {
-	std::setlocale(0, "");
+	setlocale(LC_ALL, "");
 
-	char* exe_path = argv[1];
-	char* patcher_path = argv[2];
-
+	string exe_path(argv[1]);
+	string patcher_path(argv[2]);
 	long patcher_size = get_file_size(patcher_path);
-	char* patcher_buf = new char[patcher_size];
+	wcout << L"Размер патчера: " << patcher_size << L" байт\n";
+	
+	char patcher_buf[patcher_size];
 	std::ifstream patcher(patcher_path, std::ios::binary);
 	patcher.read(patcher_buf, patcher_size);
 	patcher.close();

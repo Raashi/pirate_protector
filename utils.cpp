@@ -6,8 +6,10 @@
 
 #include "utils.h"
 
-const char* CHECKED = "_CHECKED_";
-const char* UNCHECKED = "UNCHECKED";
+using namespace std;
+
+const char CHECKED[] = "_CHECKED_";
+const char UNCHECKED[] = "UNCHECKED";
 
 const int SIG_LEN = sizeof(UNCHECKED);
 const int INT_SIZE = 4;
@@ -24,7 +26,7 @@ std::string get_temp_dir() {
 }
 
 
-std::string get_absolute_path(char* arg) {
+string get_absolute_path(char* arg) {
     DWORD   retval=0;
     BOOL    success; 
     char    buffer[MAX_PATH_SIZE]=TEXT(""); 
@@ -51,8 +53,8 @@ std::string get_absolute_path(char* arg) {
 	return std::string(buffer);
 }
 
-long get_file_size(char* filename) {
+long get_file_size(string filename) {
     struct stat stat_buf;
-    int rc = stat(filename, &stat_buf);
+    int rc = stat(filename.c_str(), &stat_buf);
     return rc == 0 ? stat_buf.st_size : -1;
 }
