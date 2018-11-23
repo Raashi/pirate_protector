@@ -1,4 +1,5 @@
 #include <string>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 
@@ -37,11 +38,11 @@ int main(int argc, char** argv) {
 		retval = 1;
 	} else {
 		// вычисляем структуру
-		char* structure = get_struct();
+		ENVIRON* env = new ENVIRON();
+		get_struct(env);
 		// записываем структуру
 		ofstream exe(exe_path, std::ios::binary | std::ios::app);
-		exe.write(structure, STRUCT_SIZE);
-		exe.write((char*)&STRUCT_SIZE, sizeof(LONG_SIZE));
+		write_struct(env, &exe);
 		// записываем сигнатуру
 		exe.write(CHECKED, SIG_LEN);
 		exe.close();

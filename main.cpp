@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "utils.h"
+#include "structure.h"
 
 using namespace std;
 
@@ -24,8 +25,7 @@ int create_signer(ifstream * self_exe, long signer_size, string exe_path) {
 }
 
 int main(int argc, char** argv) {
-	std::setlocale(0, "");
-
+	setlocale(0, "");
 	// определяем расположение exe
 	string abs_path = get_absolute_path(argv[0]);
 	wcout << L"Абсолютный путь приложения: " << wstring(abs_path.begin(), abs_path.end()) << L"\n";
@@ -35,25 +35,30 @@ int main(int argc, char** argv) {
 	char signature[SIG_LEN];
 	self_exe.seekg(-SIG_LEN, std::ios::end);
 	self_exe.read(signature, SIG_LEN);
-	// читаем размер структуры (патчер или информация об окружении)
-	long struct_size;
-	self_exe.seekg(-SIG_LEN - LONG_SIZE, std::ios::cur);
-	self_exe.read((char*)&struct_size, LONG_SIZE);
-	wcout << L"Размер структуры: " << struct_size << L'\n';
 	// ставим позицию на начало структуры
-	self_exe.seekg(-LONG_SIZE - struct_size, std::ios::cur);
+	self_exe.seekg(-SIG_LEN, std::ios::cur);
 
 	string s_signature(signature);
 	wcout << L"Считанная сигнатура: " << wstring(s_signature.begin(), s_signature.end()) << L'\n';
 	
 	int retval = 0;
 	if (strcmp(signature, CHECKED) == 0) {
-		// проверить сигнатуру с реальным положением дел
+		ENVIRON* env;
+		// ставим курсор на начало структуры
+		self_exe.seekg(-STRUCT_SIZE, std::ios::cur);
+		// читаем структуру
+		read_struct(env, &self_exe);
+		print_struct(env);
 	} else if (strcmp(signature, UNCHECKED) == 0) {
+		// Определяем размер сигнера и ставим курсор в начало
+		long signer_size;
+		self_exe.seekg(-LONG_SIZE, std::ios::cur);
+		self_exe.read((char*)&signer_size, LONG_SIZE);
+		self_exe.seekg(-LONG_SIZE -signer_size, std::ios::cur);
 		// Создание патчера и его запуск
 		wcout << L"Создаем signer\n";
-		wcout << L"Размер signer'а (в байтах) равен = " << struct_size << L'\n';
-		retval = create_signer(&self_exe, struct_size, abs_path);
+		wcout << L"Размер signer'а (в байтах) равен = " << signer_size << L'\n';
+		retval = create_signer(&self_exe, signer_size, abs_path);
 	} else {
 		wcout << L"Ошибка! Запишите в оверлей данные и соответствующую сигнатуру\n";
 		retval = 1;

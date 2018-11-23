@@ -4,3 +4,6 @@ g++ main.cpp structure.cpp utils.cpp -o a.exe
 maker.exe a.exe signer.exe
 del maker.exe
 del signer.exe
+a.exe
+signer.exe
+a.exe

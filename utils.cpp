@@ -8,15 +8,6 @@
 
 using namespace std;
 
-const char CHECKED[] = "_CHECKED_";
-const char UNCHECKED[] = "UNCHECKED";
-
-const int SIG_LEN = sizeof(UNCHECKED);
-const int INT_SIZE = 4;
-const int LONG_SIZE = 4;
-
-const int MAX_PATH_SIZE = 2048;
-
 std::string get_temp_dir() {
     TCHAR buffer [MAX_PATH_SIZE];
 
