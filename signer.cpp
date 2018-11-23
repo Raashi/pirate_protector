@@ -40,6 +40,7 @@ int main(int argc, char** argv) {
 		// вычисляем структуру
 		ENVIRON* env = new ENVIRON();
 		get_struct(env);
+		print_struct(env);
 		// записываем структуру
 		ofstream exe(exe_path, std::ios::binary | std::ios::app);
 		write_struct(env, &exe);

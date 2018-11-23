@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
 	
 	int retval = 0;
 	if (strcmp(signature, CHECKED) == 0) {
-		ENVIRON* env;
+		ENVIRON* env = new ENVIRON();
 		// ставим курсор на начало структуры
 		self_exe.seekg(-STRUCT_SIZE, std::ios::cur);
 		// читаем структуру

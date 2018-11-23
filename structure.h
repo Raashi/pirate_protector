@@ -2,14 +2,16 @@
 #define STRUCT_H
 
 #include <fstream>
+#include <string>
 
 #include "utils.h"
 
 struct ENVIRON {
-	char launch_path[MAX_PATH_SIZE];
+	std::string launch_path;
+	std::string drive_serial;
 };
 
-const int STRUCT_SIZE = MAX_PATH_SIZE;
+const int STRUCT_SIZE = 2 * MAX_PATH_SIZE;
 
 void get_struct(ENVIRON* env);
 void read_struct(ENVIRON* env, std::ifstream* f);
