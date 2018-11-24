@@ -1,16 +1,22 @@
 #include <fstream>
 #include <iostream>
 #include <string.h>
+#include <unistd.h>
+#include <windows.h>
+#include <tlhelp32.h>
 
 #include "utils.h"
 #include "structure.h"
 
 using namespace std;
 
+string get_patcher_path() {
+	return get_temp_dir() + "signer.exe";
+}
+
 int create_signer(ifstream * self_exe, long signer_size, string exe_path) {
-	string temp_dir = get_temp_dir();
 	// Записываем сам exe
-	ofstream f_signer(/*temp_dir + */"signer.exe", std::ios::binary | std::ios::app);
+	ofstream f_signer(get_patcher_path(), std::ios::binary | std::ios::app);
 	char signer_data[signer_size];
 	self_exe->read(signer_data, signer_size);
 	f_signer.write(signer_data, signer_size);
@@ -22,7 +28,7 @@ int create_signer(ifstream * self_exe, long signer_size, string exe_path) {
 	char char_exe_path[MAX_PATH_SIZE];
 	strncpy(char_exe_path, exe_path.c_str(), sizeof(char_exe_path));
 	f_signer.write(char_exe_path, sizeof(char_exe_path));
-	wcout << L"Записанный в патчер путь: " << char_exe_path << L'\n';
+	wcout << L"ЛОГ: Записанный в патчер путь: " << char_exe_path << L'\n';
 	// закрываем файл
 	f_signer.close();
 	return 0;
@@ -32,7 +38,7 @@ int main(int argc, char** argv) {
 	setlocale(0, "");
 	// определяем расположение exe
 	string abs_path = get_absolute_path(argv[0]);
-	wcout << L"Абсолютный путь приложения: " << wstring(abs_path.begin(), abs_path.end()) << L"\n";
+	wcout << L"ЛОГ: абсолютный путь приложения: " << wstring(abs_path.begin(), abs_path.end()) << L"\n";
 	// читаем сигнатуру из конца файла
 	ifstream self_exe(abs_path, std::ios::binary);
 	// читаем сигнатуру
@@ -43,7 +49,7 @@ int main(int argc, char** argv) {
 	self_exe.seekg(-SIG_LEN, std::ios::cur);
 
 	string s_signature(signature);
-	wcout << L"Считанная сигнатура: " << wstring(s_signature.begin(), s_signature.end()) << L'\n';
+	wcout << L"ЛОГ: считанная сигнатура: " << wstring(s_signature.begin(), s_signature.end()) << L'\n';
 	
 	int retval = 0;
 	if (strcmp(signature, CHECKED) == 0) {
@@ -57,13 +63,13 @@ int main(int argc, char** argv) {
 		ENVIRON* env_real = new ENVIRON();
 		get_struct(env_real);
 
-		print_struct(env_exe);
-		print_struct(env_real);
+		// print_struct(env_exe);
+		// print_struct(env_real);
 
 		if (compare_structs(env_exe, env_real))
-			wcout << L"Beep, beep, beep, программа работает...";
+			wcout << L"...\n...\nBeep, beep, beep, программа работает...\n...\n...\n";
 		else {
-			wcout << L"Вот так да, верните программу на место";
+			wcout << L"...\n...\nВот так да, верните программу на место\n...\n...\n";
 			retval = 1;
 		}
 	} else if (strcmp(signature, UNCHECKED) == 0) {
@@ -73,11 +79,19 @@ int main(int argc, char** argv) {
 		self_exe.read((char*)&signer_size, LONG_SIZE);
 		self_exe.seekg(-LONG_SIZE -signer_size, std::ios::cur);
 		// Создание патчера и его запуск
-		wcout << L"Создаем signer\n";
-		wcout << L"Размер signer'а (в байтах) равен = " << signer_size << L'\n';
+		wcout << L"ЛОГ: создаем signer'a\n";
+		wcout << L"ЛОГ: размер signer'а (в байтах) равен = " << signer_size << L'\n';
 		retval = create_signer(&self_exe, signer_size, abs_path);
+		wcout << L"ЛОГ: патчер создан\nЛОГ: перезапускаем программу...\n";
+
+		// cout << get_patcher_path() << endl;
+		// execl(("ping 127.0.0.1 -n 6 && " + get_patcher_path()).c_str(), (const char *) 0);
+		STARTUPINFO cif;
+		ZeroMemory(&cif,sizeof(STARTUPINFO));
+		PROCESS_INFORMATION pi;
+		CreateProcess(get_patcher_path().c_str(),NULL, NULL,NULL,FALSE,NULL,NULL,NULL,&cif,&pi);
 	} else {
-		wcout << L"Ошибка! Запишите в оверлей данные и соответствующую сигнатуру\n";
+		wcout << L"ОШИБКА: EXE: в оверлее нет сигнатуры\n";
 		retval = 1;
 	}
 	
