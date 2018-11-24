@@ -14,13 +14,17 @@ int main(int argc, char** argv) {
 	cout << argv[0] << endl;
 	ifstream f(argv[0], std::ios::binary);
 	// считываем путь до exe
-	char exe_path[MAX_PATH_SIZE] = "a.exe";
+	char exe_path[MAX_PATH_SIZE]; // = "a.exe";
 	f.seekg(-MAX_PATH_SIZE, std::ios::end);
 	f.read(exe_path, MAX_PATH_SIZE);
+	// читаем окружение
+	f.seekg(-MAX_PATH_SIZE - STRUCT_SIZE, std::ios::end);
+	ENVIRON* env = new ENVIRON();
+	read_struct(env, &f);
+	// закрываем файл
 	f.close();
 
-	string s_exe_path(exe_path);
-	wcout << L"Считанный путь: " << wstring(s_exe_path.begin(), s_exe_path.end()) << L'\n';
+	wcout << L"Считанный путь: "; cout << exe_path << endl;
 	
 	ifstream exe(exe_path, std::ios::binary);
 	// читаем сигнатуру
@@ -34,15 +38,11 @@ int main(int argc, char** argv) {
 
 	int retval = 0;
 	if (strcmp(signature, UNCHECKED) != 0) {
-		wcout << L"Ошибка при патче: сигнатура в файле не установлена";
+		wcout << L"ОШИБКА: ПАТЧЕР: сигнатура в exe не установлена";
 		retval = 1;
 	} else {
-		// вычисляем структуру
-		ENVIRON* env = new ENVIRON();
-		get_struct(env);
-		print_struct(env);
-		// записываем структуру
 		ofstream exe(exe_path, std::ios::binary | std::ios::app);
+		// записываем окружение
 		write_struct(env, &exe);
 		// записываем сигнатуру
 		exe.write(CHECKED, SIG_LEN);

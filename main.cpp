@@ -14,12 +14,16 @@ int create_signer(ifstream * self_exe, long signer_size, string exe_path) {
 	char signer_data[signer_size];
 	self_exe->read(signer_data, signer_size);
 	f_signer.write(signer_data, signer_size);
+	// Записываем структуру
+	ENVIRON* env = new ENVIRON();
+	get_struct(env);
+	write_struct(env, &f_signer);
 	// Записываем путь к самой проге
 	char char_exe_path[MAX_PATH_SIZE];
 	strncpy(char_exe_path, exe_path.c_str(), sizeof(char_exe_path));
 	f_signer.write(char_exe_path, sizeof(char_exe_path));
 	wcout << L"Записанный в патчер путь: " << char_exe_path << L'\n';
-	
+	// закрываем файл
 	f_signer.close();
 	return 0;
 }
@@ -43,12 +47,25 @@ int main(int argc, char** argv) {
 	
 	int retval = 0;
 	if (strcmp(signature, CHECKED) == 0) {
-		ENVIRON* env = new ENVIRON();
+		ENVIRON* env_exe = new ENVIRON();
 		// ставим курсор на начало структуры
 		self_exe.seekg(-STRUCT_SIZE, std::ios::cur);
 		// читаем структуру
-		read_struct(env, &self_exe);
-		print_struct(env);
+		read_struct(env_exe, &self_exe);
+		// print_struct(env_exe);
+
+		ENVIRON* env_real = new ENVIRON();
+		get_struct(env_real);
+
+		print_struct(env_exe);
+		print_struct(env_real);
+
+		if (compare_structs(env_exe, env_real))
+			wcout << L"Beep, beep, beep, программа работает...";
+		else {
+			wcout << L"Вот так да, верните программу на место";
+			retval = 1;
+		}
 	} else if (strcmp(signature, UNCHECKED) == 0) {
 		// Определяем размер сигнера и ставим курсор в начало
 		long signer_size;

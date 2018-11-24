@@ -1,10 +1,12 @@
 #include <cstring>
 #include <iostream>
+#include <fstream>
 #include <Windows.h>
 #include <winioctl.h>
 
 #include "utils.h"
 #include "structure.h"
+#include "sha256.h"
 
 using namespace std;
 
@@ -122,9 +124,42 @@ void get_drive_info(ENVIRON* env) {
 }
 
 
+void get_file_size(ENVIRON* env) {
+	ifstream exe(env->launch_path, std::ios::binary);
+	// читаем сигнатуру
+	char signature[SIG_LEN];
+	exe.seekg(-SIG_LEN, std::ios::end);
+	exe.read(signature, SIG_LEN);
+	// пропускаем ENVIRON если лежит
+	if (strcmp(signature, CHECKED) == 0)
+		exe.seekg(-STRUCT_SIZE - SIG_LEN, std::ios::end);
+	exe.seekg(-SIG_LEN, std::ios::cur);
+	// вычисляем длину
+	int content_size = exe.tellg();
+	env->content_size = content_size;
+	exe.close();
+}
+
+
+void get_exe_hash(ENVIRON* env) {
+	ifstream exe(env->launch_path, std::ios::binary);
+	// читаем файл в память
+	char* content = new char[env->content_size];
+	exe.read(content, env->content_size);
+	// вычисляем хеш
+	SHA256* sha = new SHA256();
+  	env->hash = sha->hash(content, env->content_size);
+
+  	delete[] content;
+  	exe.close();
+}
+
+
 void get_struct(ENVIRON* env) {
 	get_launch_path(env);
 	get_drive_info(env);
+	get_file_size(env);
+	get_exe_hash(env);
 }
 
 
@@ -136,6 +171,14 @@ void read_struct(ENVIRON* env, std::ifstream* f) {
 	char drive_serial[MAX_PATH_SIZE];
 	f->read(drive_serial, sizeof(drive_serial));
 	env->drive_serial = string(drive_serial);
+
+	long content_size;
+	f->read((char*)&content_size, LONG_SIZE);
+	env->content_size = content_size;
+
+	char hash[MAX_PATH_SIZE];
+	f->read(hash, sizeof(hash));
+	env->hash = string(hash);
 }
 
 
@@ -147,6 +190,12 @@ void write_struct(ENVIRON* env, std::ofstream* f) {
 	char y[MAX_PATH_SIZE];
 	strcpy(y, env->drive_serial.c_str());
 	f->write(y, MAX_PATH_SIZE);
+
+	f->write((char*)&env->content_size, LONG_SIZE);
+
+	char z[MAX_PATH_SIZE];
+	strcpy(z, env->hash.c_str());
+	f->write(z, MAX_PATH_SIZE);
 }
 
 
@@ -154,4 +203,14 @@ void print_struct(ENVIRON* env) {
 	wcout << L"-----------ОКРУЖЕНИЕ-----------\n";
 	wcout << L"Путь запуска: "; cout << env->launch_path << endl;
 	wcout << L"Серийник устройства: "; cout << env->drive_serial << endl;
+	wcout << L"Размер файла: "; cout << env->content_size << endl;
+	wcout << L"Хеш файла: "; cout << env->hash << endl;
+}
+
+
+bool compare_structs(ENVIRON* env1, ENVIRON* env2) {
+	return (env1->launch_path == env2->launch_path) &&
+		   (env1->drive_serial == env2->drive_serial) &&
+		   (env1->content_size == env2->content_size) && 
+		   (env1->hash == env2->hash);
 }
