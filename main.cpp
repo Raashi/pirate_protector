@@ -66,10 +66,16 @@ int main(int argc, char** argv) {
 		// print_struct(env_exe);
 		// print_struct(env_real);
 
-		if (compare_structs(env_exe, env_real))
-			wcout << L"...\n...\nBeep, beep, beep, программа работает...\n...\n...\n";
+		if (compare_structs(env_exe, env_real)) {
+			wcout << L"...\n...\n";
+			while (true) {
+				wcout << L"Beep, beep, beep, программа работает...\n";	
+				sleep(1);
+			}
+		}
 		else {
 			wcout << L"...\n...\nВот так да, верните программу на место\n...\n...\n";
+			system("pause");
 			retval = 1;
 		}
 	} else if (strcmp(signature, UNCHECKED) == 0) {
@@ -84,12 +90,7 @@ int main(int argc, char** argv) {
 		retval = create_signer(&self_exe, signer_size, abs_path);
 		wcout << L"ЛОГ: патчер создан\nЛОГ: перезапускаем программу...\n";
 
-		// cout << get_patcher_path() << endl;
-		// execl(("ping 127.0.0.1 -n 6 && " + get_patcher_path()).c_str(), (const char *) 0);
-		STARTUPINFO cif;
-		ZeroMemory(&cif,sizeof(STARTUPINFO));
-		PROCESS_INFORMATION pi;
-		CreateProcess(get_patcher_path().c_str(),NULL, NULL,NULL,FALSE,NULL,NULL,NULL,&cif,&pi);
+		ShellExecuteA(GetDesktopWindow(), "open", get_patcher_path().c_str(), NULL, NULL, SW_HIDE);
 	} else {
 		wcout << L"ОШИБКА: EXE: в оверлее нет сигнатуры\n";
 		retval = 1;

@@ -2,59 +2,45 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
-// #include "stdafx.h"
-#include <unistd.h>
 #include <windows.h>
-#include <tlhelp32.h>
+#include <ShellApi.h>
+#include <unistd.h>
 
 #include "utils.h"
+#include "strsafe.h"
 #include "structure.h"
 
 using namespace std;
 
-bool FindProcessId(string exe_path) {
-	string process_name = exe_path.substr(exe_path.find_last_of("\\") + 1);
-	cout << process_name;
- 	
- 	PROCESSENTRY32 processInfo;
- 	processInfo.dwSize = sizeof(processInfo);
+#define SELF_REMOVE_STRING  TEXT("cmd.exe /C ping 1.1.1.1 -n 1 -w 3000 > Nul & Del /f /q \"%s\"")
 
-  	HANDLE processesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-  	if (processesSnapshot == INVALID_HANDLE_VALUE)
-    	return false;
 
-	Process32First(processesSnapshot, &processInfo);
-	if (!process_name.compare(processInfo.szExeFile)) {
-    	CloseHandle(processesSnapshot);
-    	return true;
-  	}
+void del_me()
+{
+    TCHAR szModuleName[MAX_PATH];
+    TCHAR szCmd[2 * MAX_PATH];
+    STARTUPINFO si = {0};
+    PROCESS_INFORMATION pi = {0};
 
-  	while (Process32Next(processesSnapshot, &processInfo)) {
-    	if (!process_name.compare(processInfo.szExeFile)) {
-      		CloseHandle(processesSnapshot);
-      		return true;
-    	}
-  	}
+    GetModuleFileName(NULL, szModuleName, MAX_PATH);
 
-  	CloseHandle(processesSnapshot);
-  	return false;
-}
+    StringCbPrintf(szCmd, 2 * MAX_PATH, SELF_REMOVE_STRING, szModuleName);
 
-void wait(string exe_path) {
-	while (FindProcessId(exe_path)) {
-		wcout << L"ЛОГ: ждём пока закроется exe\n"; 
-		sleep(3);
-	}
-	wcout << L"ЛОГ: exe остановлено\n";
+    CreateProcess(NULL, szCmd, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
+
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
 }
 
 
 int main(int argc, char** argv) {
+	ofstream kk("D:\\kek.txt");
+
 	setlocale(0, "");
 
 	ifstream f(argv[0], std::ios::binary);
 	// считываем путь до exe
-	char exe_path[MAX_PATH_SIZE]; // = "a.exe";
+	char exe_path[MAX_PATH_SIZE]; 
 	f.seekg(-MAX_PATH_SIZE, std::ios::end);
 	f.read(exe_path, MAX_PATH_SIZE);
 	// читаем окружение
@@ -64,9 +50,8 @@ int main(int argc, char** argv) {
 	// закрываем файл
 	f.close();
 
-	// wcout << L"ЛОГ: считанный путь: "; cout << exe_path << endl;
-	// wait(string(exe_path));
-	sleep(5);
+	wcout << L"ЛОГ: считанный путь: "; cout << exe_path << endl;
+	sleep(2);
 	
 	ifstream exe(exe_path, std::ios::binary);
 	// читаем сигнатуру
@@ -76,7 +61,6 @@ int main(int argc, char** argv) {
 	exe.close();
 
 	string s_signature(signature);
-	// wcout << L"Считанная сигнатура: " << wstring(s_signature.begin(), s_signature.end()) << L'\n';
 
 	int retval = 0;
 	if (strcmp(signature, UNCHECKED) != 0) {
@@ -89,7 +73,12 @@ int main(int argc, char** argv) {
 		// записываем сигнатуру
 		exe.write(CHECKED, SIG_LEN);
 		exe.close();
+		sleep(2);
+
+		wcout << L"ЛОГ: Перезапускаем приложение\n";
+		int a = (int) ShellExecuteA(GetDesktopWindow(), "open", exe_path, NULL, NULL, SW_SHOW);
 	}
 	
+	del_me();
 	return retval;
 }
