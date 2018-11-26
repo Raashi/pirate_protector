@@ -11,7 +11,7 @@ using namespace std;
 std::string get_temp_dir() {
     TCHAR buffer [MAX_PATH_SIZE];
 
-    if (GetTempPath (MAX_PATH, buffer) != 0)
+    if (GetTempPath(MAX_PATH, buffer) != 0)
         return std::string(buffer);
     return "";
 }

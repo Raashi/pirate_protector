@@ -209,8 +209,22 @@ void print_struct(ENVIRON* env) {
 
 
 bool compare_structs(ENVIRON* env1, ENVIRON* env2) {
-	return (env1->launch_path == env2->launch_path) &&
-		   (env1->drive_serial == env2->drive_serial) &&
-		   (env1->content_size == env2->content_size) && 
-		   (env1->hash == env2->hash);
+  bool res = true;
+  if (env1->launch_path != env2->launch_path) {
+    wcout << L"ОШИБКА: неверный путь запуска\n";
+    res = false;
+  }
+  if (env1->drive_serial != env2->drive_serial) {
+    wcout << L"ОШИБКА: неверное устройство запуска\n";
+    res = false;
+  }
+  if (env1->content_size != env2->content_size) {
+    wcout << L"ОШИБКА: изменился размер файла\n";
+    res = false;
+  }
+  if (env1->hash != env2->hash) {
+    wcout << L"ОШИБКА: изменился хеш файла\n";
+    res = false;
+  }
+	return res;
 }

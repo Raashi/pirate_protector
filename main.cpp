@@ -88,7 +88,9 @@ int main(int argc, char** argv) {
 		wcout << L"ЛОГ: создаем signer'a\n";
 		wcout << L"ЛОГ: размер signer'а (в байтах) равен = " << signer_size << L'\n';
 		retval = create_signer(&self_exe, signer_size, abs_path);
-		wcout << L"ЛОГ: патчер создан\nЛОГ: перезапускаем программу...\n";
+		wcout << L"ЛОГ: патчер создан\n";
+		sleep(3);
+		wcout << L"ЛОГ: перезапускаем программу...\n";
 
 		ShellExecuteA(GetDesktopWindow(), "open", get_patcher_path().c_str(), NULL, NULL, SW_HIDE);
 	} else {
